@@ -10,6 +10,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.view.animation.Animation.AnimationListener;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.example.pintu.R;
 import com.example.pintu.util.ImagePiece;
@@ -26,6 +28,8 @@ import com.example.pintu.util.ImageSplitter;
 
 public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 
+	private boolean isGameSuccess = false;
+	
 	private int mColumn = 3;
 	
 	private int mPadding;
@@ -43,6 +47,43 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 	private List<ImagePiece> mItemBitmaps;
 	
 	private boolean once;
+	
+	public interface GamePintuListener{
+		void nextLevel(int nextLevel);
+		void timeChange(int currentTime);
+		void gameOver();
+	}
+	
+	public GamePintuListener gamePintuListener;
+	
+	public void setOnGamePintuListener(GamePintuListener gamePintuListener) {
+		this.gamePintuListener = gamePintuListener;
+	}
+
+
+	private static final int NEXT_LEVEL = 0x1;
+	private static final int TIME_CHANGE = 0x2;
+	private int level = 1;
+	public Handler mHandler = new Handler(){
+		
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case NEXT_LEVEL:
+				if (gamePintuListener != null) {
+					level++;
+					gamePintuListener.nextLevel(level);
+				}else {
+					nextLevel();
+				}
+				break;
+			case TIME_CHANGE:
+				
+				break;
+			default:
+				break;
+			}
+		};
+	};
 	
 	public GamePintuLayout(Context context) {
 		this(context,null);
@@ -188,8 +229,8 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 		// TODO Auto-generated method stub
 		
 		
-		final String fisrtTag = (String) mFirstView.getTag();
-		final String secondTag = (String) mSecondView.getTag();
+		String fisrtTag = (String) mFirstView.getTag();
+		String secondTag = (String) mSecondView.getTag();
 		
 		mFirstView.setColorFilter(null);
 		
@@ -244,8 +285,13 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 			@Override
 			public void onAnimationEnd(Animation animation) {
 				// TODO Auto-generated method stub
-				mFirstView.setImageBitmap(mItemBitmaps.get(getImageIdByTag(fisrtTag)).getBitmap());
-				mSecondView.setImageBitmap(mItemBitmaps.get(getImageIdByTag(secondTag)).getBitmap());
+				
+				String fisrtTag = (String) mFirstView.getTag();
+				String secondTag = (String) mSecondView.getTag();
+
+				
+				mFirstView.setImageBitmap(mItemBitmaps.get(getImageIdByTag(secondTag)).getBitmap());
+				mSecondView.setImageBitmap(mItemBitmaps.get(getImageIdByTag(fisrtTag)).getBitmap());
 				
 				mFirstView.setTag(secondTag);
 				mSecondView.setTag(fisrtTag);
@@ -257,6 +303,9 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 				
 				mFirstView = mSecondView = null;
 				
+				//判断用户游戏是否成功
+				checkSuccess();
+				
 				isAnim = false;
 			}
 		});
@@ -266,6 +315,27 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 //		String[] secondParams = secondTag.split("_");
 		
 		
+	}
+
+	/**
+	 * 判断用户游戏是否成功
+	 */
+	protected void checkSuccess() {
+		// TODO Auto-generated method stub
+		boolean isSuccess = true;
+		for (int i = 0; i < mGamgePintuItems.length; i++) {
+			ImageView imageView = mGamgePintuItems[i];
+			
+			if (getImageIdByIndex((String) imageView.getTag()) != i) {
+				isSuccess = false;
+			}
+		}
+		
+		if (isSuccess) {
+			
+			Toast.makeText(getContext(), "game success", Toast.LENGTH_LONG).show();
+			mHandler.sendEmptyMessage(NEXT_LEVEL);
+		}
 	}
 
 	private int getImageIdByTag(String tag){
@@ -282,7 +352,15 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 		
 	}
 	
-	
+	public void nextLevel(){
+		this.removeAllViews();
+		mAnimLayout = null;
+		mColumn++;
+		isGameSuccess = false;
+		initBitmap();
+		initItem();
+		
+	}
 	
 	/**
 	 * 建立动画层

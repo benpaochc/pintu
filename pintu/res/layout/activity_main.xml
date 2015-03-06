@@ -9,6 +9,7 @@
     tools:context="com.example.pintu.MainActivity" >
 
     <com.example.pintu.view.GamePintuLayout
+        android:id="@+id/id_gamePintuLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
