@@ -29,6 +29,7 @@ import com.example.pintu.util.ImageSplitter;
 public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 
 	private boolean isGameSuccess = false;
+	private boolean isGameOver = false;
 	
 	private int mColumn = 3;
 	
@@ -77,6 +78,22 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 				}
 				break;
 			case TIME_CHANGE:
+				if (isGameSuccess || isGameOver) {
+					return;
+				}
+				
+				if (mTime==0) {
+					isGameOver = true;
+					gamePintuListener.gameOver();
+					return;
+				}
+				
+				if (gamePintuListener != null) {
+					gamePintuListener.timeChange(mTime);
+				}
+				
+				mTime--;
+				mHandler.sendEmptyMessageDelayed(TIME_CHANGE, 1000);
 				
 				break;
 			default:
@@ -85,6 +102,14 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 		};
 	};
 	
+	private boolean isTimeEnabled = false;
+	private int mTime ;
+	
+	
+	public void setTimeEnabled(boolean isTimeEnabled) {
+		this.isTimeEnabled = isTimeEnabled;
+	}
+
 	public GamePintuLayout(Context context) {
 		this(context,null);
 		// TODO Auto-generated constructor stub
@@ -114,12 +139,27 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 			
 			initItem();
 			
+			checkTimeEnabled();
+			
 			once = true;
 		}
 		
 		setMeasuredDimension(mWidth, mWidth);
 	}
 	
+	private void checkTimeEnabled() {
+		// TODO Auto-generated method stub
+		if (isTimeEnabled) {
+			countTimeBaseLevel();
+			mHandler.sendEmptyMessage(TIME_CHANGE);
+		}
+	}
+
+	private void countTimeBaseLevel() {
+		// TODO Auto-generated method stub
+		mTime = (int) (Math.pow(2, level)*60);
+	}
+
 	private void initBitmap() {
 		// TODO Auto-generated method stub
 		if (mBitmap == null) {
@@ -333,6 +373,9 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 		
 		if (isSuccess) {
 			
+			isGameSuccess = true;
+			mHandler.removeMessages(TIME_CHANGE);
+			
 			Toast.makeText(getContext(), "game success", Toast.LENGTH_LONG).show();
 			mHandler.sendEmptyMessage(NEXT_LEVEL);
 		}
@@ -352,14 +395,38 @@ public class GamePintuLayout extends RelativeLayout implements OnClickListener {
 		
 	}
 	
+	
+	public void reStart(){
+		isGameOver = false;
+		isGameSuccess = false;
+		
+		mColumn--;
+		nextLevel();
+	}
+	
 	public void nextLevel(){
 		this.removeAllViews();
 		mAnimLayout = null;
 		mColumn++;
 		isGameSuccess = false;
+		checkTimeEnabled();
 		initBitmap();
 		initItem();
 		
+	}
+	
+	private boolean isPause ;
+
+	public void pause(){
+		isPause = true;
+		mHandler.removeMessages(TIME_CHANGE);
+	}
+	
+	public void resume(){
+		if (isPause) {
+			isPause = false;
+			mHandler.sendEmptyMessage(TIME_CHANGE);
+		}
 	}
 	
 	/**

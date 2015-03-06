@@ -10,28 +10,34 @@ import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
 	private GamePintuLayout mGamePintuLayout;
-	
+	private TextView mLevel;
+	private TextView mCurrentTime;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
 		mGamePintuLayout = (GamePintuLayout) findViewById(R.id.id_gamePintuLayout);
+		mLevel = (TextView) findViewById(R.id.id_level);
+		mCurrentTime = (TextView) findViewById(R.id.id_currentTime);
 		
+		mGamePintuLayout.setTimeEnabled(true);
 		mGamePintuLayout.setOnGamePintuListener(new GamePintuListener() {
 			
 			@Override
 			public void timeChange(int currentTime) {
 				// TODO Auto-generated method stub
-				
+//				mLevel.setText(""+mGamePintuLayout.lev);
+				mCurrentTime.setText(""+currentTime);
 			}
 			
 			@Override
-			public void nextLevel(int nextLevel) {
+			public void nextLevel(final int nextLevel) {
 				// TODO Auto-generated method stub
 				new AlertDialog.Builder(MainActivity.this).
 				setTitle("game info").setMessage("next level").
@@ -41,6 +47,7 @@ public class MainActivity extends Activity {
 					public void onClick(DialogInterface dialog, int which) {
 						// TODO Auto-generated method stub
 						mGamePintuLayout.nextLevel();
+						mLevel.setText(""+nextLevel);
 					}
 				}).show();
 			}
@@ -48,11 +55,48 @@ public class MainActivity extends Activity {
 			@Override
 			public void gameOver() {
 				// TODO Auto-generated method stub
-				
+				new AlertDialog.Builder(MainActivity.this).
+				setTitle("game info").setMessage("next level").
+				setPositiveButton("RESTART", new OnClickListener() {
+					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						mGamePintuLayout.reStart();
+					}
+				}).setNegativeButton("QUIT", new OnClickListener() {
+					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						finish();
+					}
+				}).show();
 			}
 		});
 		
 	}
+
+	
+	
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		mGamePintuLayout.resume();
+		
+	}
+
+
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		mGamePintuLayout.pause();
+	}
+
+
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
